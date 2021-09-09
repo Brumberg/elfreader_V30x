@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LocalDebuggerCommandArguments>-r=true</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-r=true "-proc=BF52x" "-src=ldfs\Application_.ldr" "-dst=ldfs\ApplicationPatched.ldr" "-offset=0x3002C" "-verify=true"</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

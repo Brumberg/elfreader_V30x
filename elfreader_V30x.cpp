@@ -215,7 +215,7 @@ public:
 
         static const MAPStuct map[] =
         {
-            {"BF52x", ENUM::EN_PROCESSOR_BF52x},
+            {"BF52X", ENUM::EN_PROCESSOR_BF52x},
             {"BF522", ENUM::EN_PROCESSOR_BF52x},
             {"BF523", ENUM::EN_PROCESSOR_BF52x},
             {"BF70x", ENUM::EN_PROCESSOR_BF70x},
@@ -983,7 +983,7 @@ int main(int argc, char** argv)
     static const uint32 VectorStateAddress = 0x00;
     static const uint32 baseaddress = 0x3002C;
     static const bool AppendInfoBlock = false;
-    static const uint32 AppendInfoBlockLocation = 0x80b00000;
+    static const uint32 AppendInfoBlockLocation = 0x80b00000u;
     static const bool VerifyOutput = false;
     const CDefaultCallback DefCallBack;
     uint32 VectorStateAddressResolvent = 0u;
@@ -1010,8 +1010,8 @@ int main(int argc, char** argv)
         {"-help", "Help", "",&OnHelp, EN_DATATYPE::FLAGUSAGE, 0, nullptr, nullptr, nullptr},
         {"-h", "Help", "", &OnHelp, EN_DATATYPE::FLAGUSAGE, 0, nullptr, nullptr, nullptr},
         {"-proc", "Processor type", "", &OnProcessor, EN_DATATYPE::ENUM, sizeof(EN_ProcessorType), &DefEnvironment.en_ProcessorType, nullptr, nullptr},
-        {"-srcfile", "Source file", "", nullptr, EN_DATATYPE::STRING, 0, &DefEnvironment.src, nullptr, nullptr},
-        {"-dstfile", "Destination file", "", nullptr, EN_DATATYPE::STRING, 0, &DefEnvironment.dst, nullptr, nullptr},
+        {"-src", "Source file", "", nullptr, EN_DATATYPE::STRING, 0, &DefEnvironment.src, nullptr, nullptr},
+        {"-dst", "Destination file", "", nullptr, EN_DATATYPE::STRING, 0, &DefEnvironment.dst, nullptr, nullptr},
         {"-uvsa", "specify vector state address", "[false/true]", &DefCallBack, EN_DATATYPE::BOOL, sizeof(bool), &DefEnvironment.bVectorStateAddress, nullptr, nullptr},
         {"-vsa", "define vector state address", "", &VectorStateAddressResolutor, EN_DATATYPE::INT32, sizeof(uint32), &DefEnvironment.u32_VectorStateAddress, nullptr, &CUint32Range},
         {"-offset", "defines address offset ", "", &DefCallBack, EN_DATATYPE::UINT32, sizeof(uint32), &DefEnvironment.u32_BaseAddress, nullptr, &CUint32Range},
