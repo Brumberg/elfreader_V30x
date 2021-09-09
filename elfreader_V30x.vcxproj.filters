@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Quelldateien">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Headerdateien">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Ressourcendateien">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Headerdateien\V303">
+      <UniqueIdentifier>{6ab09e56-89de-49fd-bdbc-7060c02ce340}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headerdateien\V304">
+      <UniqueIdentifier>{334ee827-efc2-42e7-b717-6c9a0e7eb05d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\V303">
+      <UniqueIdentifier>{dd28359b-cc5d-41fa-91e4-68b86e0d31c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\V304">
+      <UniqueIdentifier>{0825148d-f760-4da0-8cc4-538782aa87d0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="elfreader_V30x.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Crc16.c">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="V303\CElfReader_V303.cpp">
+      <Filter>Quelldateien\V303</Filter>
+    </ClCompile>
+    <ClCompile Include="V304\CElfReader_V304.cpp">
+      <Filter>Quelldateien\V304</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Crc16.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="V303\CElfReader_V303.h">
+      <Filter>Headerdateien\V303</Filter>
+    </ClInclude>
+    <ClInclude Include="V304\CElfReader_V304.h">
+      <Filter>Headerdateien\V304</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
