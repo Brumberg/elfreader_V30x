@@ -393,7 +393,7 @@ bool CElfReader::GenerateTableEntry(BlockType type, uint32_t startaddress, uint3
 	entry.m_NextTableEntry = NULL;
 	entry.m_bDMAAccess = false;
 	const uint8_t *memorysection = GetMemoryContent(startaddress, stopaddress);
-	if (memorysection)//it is a const clock
+	if (memorysection!=nullptr)//it is a const clock
 	{
 		if (!((startaddress >= IgnoreSDRAMLower) && (stopaddress <= IgnoreSDRAMUpper)))
 		{
@@ -469,19 +469,19 @@ bool CElfReader::Deflate()
 
 				if ((pHdr->usFlags&(BFLAG_INIT | BFLAG_IGNORE)) == BFLAG_INIT)
 				{
-					std::cout << "Execute Init" << std::endl;
+					std::cout << "Execute Init." << std::endl;
 				}
 
 				if ((pHdr->usFlags&(BFLAG_CALLBACK | BFLAG_IGNORE)) == BFLAG_INIT)
 				{
-					std::cout << "Another callback execution" << std::endl;
+					std::cout << "Another callback execution." << std::endl;
 				}
 
 			}
 			else
 			{
 				retVal = false;
-				std::cout << "Abnormal header block" << std::endl;
+				std::cerr << "Abnormal header block." << std::endl;
 			}
 		} while (((pHdr->usFlags&BFLAG_FINAL) == 0) && retVal);
 	}
@@ -678,13 +678,13 @@ bool CElfReader::CorrectApplicationHeaderStructure(bool appendinfoblock, uint32_
 					}
 					else
 					{
-						std::cout << "Error while creating IGNORE block. Invalid memory section." << std::endl;
+						std::cerr << "Error while creating IGNORE block. Invalid memory section." << std::endl;
 						retVal = false;
 					}
 				}
 				else
 				{
-					std::cout << "Error while creating IGNORE block." << std::endl;
+					std::cerr << "Error while creating IGNORE block." << std::endl;
 					retVal = false;
 				}
 
@@ -700,7 +700,7 @@ bool CElfReader::CorrectApplicationHeaderStructure(bool appendinfoblock, uint32_
 			}
 			else
 			{
-				std::cout << "Invalid data stream. Final block missing" << std::endl;
+				std::cerr << "Invalid data stream. Final block missing." << std::endl;
 				retVal = false;
 			}
 		}
@@ -726,7 +726,7 @@ bool CElfReader::CorrectApplicationHeaderStructure(bool appendinfoblock, uint32_
 			}
 			else
 			{
-				std::cout << "Invalid data stream. Final block missing" << std::endl;
+				std::cerr << "Invalid data stream. Final block missing." << std::endl;
 				retVal = false;
 			}
 		}
@@ -794,7 +794,7 @@ bool CElfReader::PatchFile(bool appendinfoblock, uint32_t appinfoaddress)
 					else if (pHdr->ulRamAddr >= FlashLayoutCRCTable && pHdr->ulRamAddr+ulsize >= FlashLayoutCRCTable + 256 * sizeof(MemoryTable))
 					{
 						uint8_t *p = const_cast<uint8_t*>(GetMemoryContent(pHdr->ulRamAddr, pHdr->ulRamAddr + pHdr->ulBlockLen));
-						if (p)
+						if (p!=nullptr)
 						{
 							uint32_t j = pHdr->ulRamAddr + pHdr->ulBlockLen;
 							for (uint32_t i = 0; i < (pHdr->ulBlockLen) / sizeof(pHdr->Argument); ++i)
@@ -836,7 +836,8 @@ bool CElfReader::PatchFile(bool appendinfoblock, uint32_t appinfoaddress)
 						}
 						else
 						{
-							std::cout << "Invalid memory section. Unable to correct ldr file." << std::endl;
+							std::cerr << "Invalid memory section. Unable to correct ldr file." << std::endl;
+							retVal = false;
 						}
 
 					}
@@ -844,7 +845,7 @@ bool CElfReader::PatchFile(bool appendinfoblock, uint32_t appinfoaddress)
 					{
 						//split section
 						uint8_t *p = const_cast<uint8_t*>(GetMemoryContent(pHdr->ulRamAddr, pHdr->ulRamAddr + pHdr->ulBlockLen));
-						if (p)
+						if (p!=nullptr)
 						{
 							for (uint32_t i = 0; i < (FlashLayoutCRCTable - pHdr->ulRamAddr) / sizeof(pHdr->Argument); ++i)
 								retVal &= memcmp(&reinterpret_cast<uint32_t*>(p)[i], &pHdr->Argument, sizeof(pHdr->Argument))==0;
@@ -896,18 +897,19 @@ bool CElfReader::PatchFile(bool appendinfoblock, uint32_t appinfoaddress)
 							}
 							else
 							{
-								std::cout << "Discrepancy in fill section unexpected. Can't patch file." << std::endl;
+								std::cerr << "Discrepancy in fill section unexpected. Can't patch file." << std::endl;
+								retVal = false;
 							}
 						}
 						else
 						{
-							std::cout << "Invalid memory section. Unable to correct ldr file." << std::endl;
+							std::cerr << "Invalid memory section. Unable to correct ldr file." << std::endl;
 							retVal = false;
 						}
 					}
 					else
 					{
-						std::cout << "Corrupt fill block" << std::endl;
+						std::cerr << "Corrupt fill block." << std::endl;
 						retVal = false;
 					}
 
@@ -961,7 +963,7 @@ bool CElfReader::PatchFile(bool appendinfoblock, uint32_t appinfoaddress)
         else
         {
 			DXEPointer = 0;
-			CorrectApplicationHeaderStructure(appendinfoblock, appinfoaddress, DXEPointer);
+			retVal = CorrectApplicationHeaderStructure(appendinfoblock, appinfoaddress, DXEPointer);
         }
 	}
 	else
@@ -1211,7 +1213,8 @@ bool CElfReader::ExtractMemoryLayout(bool usestatevectoraddress, uint32_t statev
 						std::cout << "{ " << "(uint16*)0x0" << value.startaddress << ", " << "(uint16*)0x0" << value.stopaddress << ", " << "0x0" << value.m_u16CRC << ", &m_astMemDescriptor[0x0" << blockno++ << "], " << bstat << ", " << "&m_au16CRCState[0x0" << crcix++ << "]},\t/* Length=0x" << value.stopaddress - value.startaddress << "*/" << std::endl;
 						if (reinterpret_cast<uint32_t>(value.startaddress) % 2)
 						{
-							std::cout << "Invalid block start" << std::endl;
+							std::cerr << "Invalid block start" << std::endl;
+							retVal = false;
 						}
 					}
 					else
@@ -1219,7 +1222,8 @@ bool CElfReader::ExtractMemoryLayout(bool usestatevectoraddress, uint32_t statev
 						std::cout << "{ " << "(uint16*)0x0" << value.startaddress << ", " << "(uint16*)0x0" << value.stopaddress << ", " << "0x0" << value.m_u16CRC << ", &m_astMemDescriptor[0x0" << blockno++ << "], " << bstat << ", " << "&m_au16CRCState[0x0" << crcix++ << "]}\t/* Length=0x" << value.stopaddress - value.startaddress << "*/" << std::endl;
 						if (reinterpret_cast<uint32_t>(value.startaddress) % 2)
 						{
-							std::cout << "Invalid block start" << std::endl;
+							std::cerr << "Invalid block start" << std::endl;
+							retVal = false;
 						}
 					}
 
@@ -1293,24 +1297,25 @@ bool CElfReader::ExtractMemoryLayout(bool usestatevectoraddress, uint32_t statev
 				}
 				else
 				{
-					std::cout << std::dec << "Error. Number of table entries: " << RegeneratedMemTable.size() << " out of " << sizeof(m_MemoryTable) / sizeof(m_MemoryTable[0]) << ". Insufficient table space." << std::endl;
+					std::cerr << std::dec << "Error. Number of table entries: " << RegeneratedMemTable.size() << " out of " << sizeof(m_MemoryTable) / sizeof(m_MemoryTable[0]) << ". Insufficient table space." << std::endl;
 					retVal = false;
 				}
 			}
 			else
 			{
-				std::cout << "Invalid flash file. Unable to resolve memory sections." << std::endl;
+				std::cerr << "Invalid flash file. Unable to resolve memory sections." << std::endl;
+				retVal = false;
 			}
 		}
 		else
 		{
+			std::cerr << "Invalid file. ldf file doesn't contain a valid identifier." << std::endl;
 			retVal = false;
-			std::cout << "Invalid file. ldf file doesn't contain a valid identifier." << std::endl;
 		}
 	}
 	else
 	{
-		std::cout << "Invalid file. ldf file does not contain valid CRC table section." << std::endl;
+		std::cerr << "Invalid file. ldf file does not contain valid CRC table section." << std::endl;
 		retVal = false;
 	}
 	return retVal;
@@ -1678,7 +1683,7 @@ bool CElfReader::SimulateExtraction(std::vector<uint8_t> rawdata)
 			else
 			{
 				retVal = false;
-				std::cout << "Abnormal header block" << std::endl;
+				std::cerr << "Abnormal header block." << std::endl;
 			}
 		} while (((pHdr->usFlags&BFLAG_FINAL) == 0) && retVal);
 	}
@@ -1879,7 +1884,7 @@ bool CIntelHexConverter::Convert(size_t length, char *datain, std::vector<uint8_
 		retVal &= !(static_cast<unsigned char>((~crosscheck) + 1) ^ checksum);
 		if (!retVal)
 		{
-			std::cout << "CRC error" << std::endl;
+			std::cerr << "CRC error" << "(File: " << __FILE__ << " Line: " << __LINE__ << ")." << std::endl;
 		}
 		unsigned char cdatatype = static_cast<unsigned char>(strtoul(settype.c_str(), NULL, 16));
 		switch (cdatatype)
@@ -1948,7 +1953,7 @@ bool CIntelHexMerger::Convert(size_t length, char *datain, std::vector<CIntelHex
 		retVal &= !(static_cast<unsigned char>((~crosscheck) + 1) ^ checksum);
 		if (!retVal)
 		{
-			std::cout << "CRC error" << std::endl;
+			std::cerr << "CRC error" << "(File: " << __FILE__ << " Line: " << __LINE__ << ")." << std::endl;
 		}
 		unsigned char cdatatype = static_cast<unsigned char>(strtoul(settype.c_str(), NULL, 16));
 		CIntelHexMerger merge;
