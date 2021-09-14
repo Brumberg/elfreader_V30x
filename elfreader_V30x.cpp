@@ -980,7 +980,7 @@ static void Execute_V304(std::string& src, std::string& dst, uint32 addr_offset,
                 }
                 else
                 {
-                    std::cout << "Error. Unable to patch file (patch)." << std::endl;
+                    std::cerr << "Error. Unable to patch file (patch)." << std::endl;
                 }
             }
             else
