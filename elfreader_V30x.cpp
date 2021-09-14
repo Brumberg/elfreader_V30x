@@ -818,7 +818,7 @@ static void PrintRecordSet(size_t tablelength, CommandLineOption const* const pt
             case EN_DATATYPE::NO:
                 break;
             default:
-                std::cout << "No conversion available";
+                std::cerr << "No conversion available. Table index " << i << std::endl;
                 break;
 
             }
@@ -870,10 +870,10 @@ static void Execute_V303(std::string& src, std::string& dst, uint32 addr_offset,
     V303::CElfReader reader(src);
     if (reader.GetState() == V303::CElfReader::ELF_OK)
     {
-        std::cout << "File OK" << std::endl;
+        std::cerr << "File OK" << std::endl;
         if (reader.Deflate())
         {
-            std::cout << "Deflating completed..." << std::endl;
+            std::cerr << "Deflating completed..." << std::endl;
 
             if (reader.ExtractMemoryLayout(usestatevector, StateVectorAddress))
             {
@@ -883,52 +883,52 @@ static void Execute_V303(std::string& src, std::string& dst, uint32 addr_offset,
                     {
                         if (reader.Merge(dst, addr_offset))
                         {
-                            std::cout << "File successfully merged." << std::endl;
+                            std::cerr << "File successfully merged." << std::endl;
                             if (verify)
                             {
-                                std::cout << "Checking integrity..." << std::endl;
+                                std::cerr << "Checking integrity..." << std::endl;
                                 if (reader.CheckIntegrity(dst))
                                 {
-                                    std::cout << "Verification succeeded." << std::endl;
+                                    std::cerr << "Verification succeeded." << std::endl;
                                 }
                                 else
                                 {
-                                    std::cout << "Integrity check failed. " << std::endl;
+                                    std::cerr << "Integrity check failed. " << std::endl;
                                 }
                             }
                             else
                             {
-                                std::cout << "Unknown attribute" << std::endl;
+                                std::cerr << "Unknown attribute" << std::endl;
                             }
                         }
                         else
                         {
-                            std::cout << "Error. Unable to patch file (merge process)." << std::endl;
+                            std::cerr << "Error. Unable to patch file (merge process)." << std::endl;
                         }
                     }
                     else
                     {
-                        std::cout << "Error. Unable to patch file (OpenLdrFile)." << std::endl;
+                        std::cerr << "Error. Unable to patch file (OpenLdrFile)." << std::endl;
                     }
                 }
                 else
                 {
-                    std::cout << "Error. Unable to patch file (patch)." << std::endl;
+                    std::cerr << "Error. Unable to patch file (patch)." << std::endl;
                 }
             }
             else
             {
-                std::cout << "Error. Unable to extract memory layout." << std::endl;
+                std::cerr << "Error. Unable to extract memory layout." << std::endl;
             }
         }
         else
         {
-            std::cout << "Deflating process stopped. File corrupt." << std::endl;
+            std::cerr << "Deflating process stopped. File corrupt." << std::endl;
         }
     }
     else
     {
-        std::cout << "Error occured. " << "State" << reader.GetState() << std::endl;
+        std::cerr << "Error occured. " << "State" << reader.GetState() << std::endl;
     }
 }
 
@@ -937,10 +937,10 @@ static void Execute_V304(std::string& src, std::string& dst, uint32 addr_offset,
     V304::CElfReader reader(src);
     if (reader.GetState() == V304::CElfReader::ELF_OK)
     {
-        std::cout << "File OK" << std::endl;
+        std::cerr << "File OK" << std::endl;
         if (reader.Deflate())
         {
-            std::cout << "Deflating completed..." << std::endl;
+            std::cerr << "Deflating completed..." << std::endl;
 
             if (reader.ExtractMemoryLayout(usestatevector, StateVectorAddress))
             {
@@ -950,32 +950,32 @@ static void Execute_V304(std::string& src, std::string& dst, uint32 addr_offset,
                     {
                         if (reader.Merge(dst, addr_offset))
                         {
-                            std::cout << "File successfully merged." << std::endl;
+                            std::cerr << "File successfully merged." << std::endl;
                             if (verify)
                             {
-                                std::cout << "Checking integrity..." << std::endl;
+                                std::cerr << "Checking integrity..." << std::endl;
                                 if (reader.CheckIntegrity(dst))
                                 {
-                                    std::cout << "Verification succeeded." << std::endl;
+                                    std::cerr << "Verification succeeded." << std::endl;
                                 }
                                 else
                                 {
-                                    std::cout << "Integrity check failed. " << std::endl;
+                                    std::cerr << "Integrity check failed. " << std::endl;
                                 }
                             }
                             else
                             {
-                                std::cout << "Unknown attribute" << std::endl;
+                                std::cerr << "Unknown attribute" << std::endl;
                             }
                         }
                         else
                         {
-                            std::cout << "Error. Unable to patch file (merge process)." << std::endl;
+                            std::cerr << "Error. Unable to patch file (merge process)." << std::endl;
                         }
                     }
                     else
                     {
-                        std::cout << "Error. Unable to patch file (OpenLdrFile)." << std::endl;
+                        std::cerr << "Error. Unable to patch file (OpenLdrFile)." << std::endl;
                     }
                 }
                 else
@@ -985,17 +985,17 @@ static void Execute_V304(std::string& src, std::string& dst, uint32 addr_offset,
             }
             else
             {
-                std::cout << "Error. Invalid/corrupt flash file." << std::endl;
+                std::cerr << "Error. Invalid/corrupt flash file." << std::endl;
             }
         }
         else
         {
-            std::cout << "Deflating process stopped. File corrupt." << std::endl;
+            std::cerr << "Deflating process stopped. File corrupt." << std::endl;
         }
     }
     else
     {
-        std::cout << "Error occured. " << "State" << reader.GetState() << std::endl;
+        std::cerr << "Error occured. " << "State" << reader.GetState() << std::endl;
     }
 }
 
