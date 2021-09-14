@@ -148,10 +148,10 @@ namespace V304
 		bool PatchFile(bool appendinfoblock, uint32_t appinfoaddress);
 		bool Deflate();
 		ElfStatus GetState()const { return eElfStatus; }
-		void ExtractMemoryLayout(bool usestatevectoraddress, uint32_t statevectoraddress);
+		bool ExtractMemoryLayout(bool usestatevectoraddress, uint32_t statevectoraddress);
 		bool OpenLdrFile(std::string existingldr);
 		bool PrintFileTree(bool patchedfile = true) const;
-		bool Merge(std::string patcheldrfile, uint32_t baseaddress, bool appendappinfoblock, uint32_t appinfoblockaddress);
+		bool Merge(std::string patcheldrfile, uint32_t baseaddress);
 		bool CheckIntegrity(std::string filename);
 		virtual ~CElfReader() {};
 	};

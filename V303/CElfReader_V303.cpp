@@ -636,7 +636,7 @@ bool CElfReader::CorrectApplicationHeaderStructure(bool appendinfoblock, uint32_
 				{
 					//getting pointer to dxdata
 					const uint8_t* t = GetMemoryContent(appinfoaddress, appinfoaddress + sizeof(ST_APPINFOS));
-					if (t)
+					if (t!=nullptr)
 					{
 						const ST_APPINFOS* info = reinterpret_cast<const ST_APPINFOS*>(t);
 						std::cout << "Device Name: " << info->ac8_DeviceName << std::endl
@@ -777,7 +777,7 @@ bool CElfReader::PatchFile(bool appendinfoblock, uint32_t appinfoaddress)
 						addblock = CmpFillBlock(pucAddr, ulsize, pHdr->Argument);
 						if (!addblock)
 						{
-							std::cout << "Correcting fill block." << std::hex << "0x" << pucAddr << std::endl;
+							std::cout << "Correcting fill block: " << std::hex << "0x" << pucAddr << std::endl;
 						}
 					}
 
@@ -993,8 +993,9 @@ uint8_t CElfReader::CalcHeaderChecksum(TFlashHeader *header)
 	return crc;
 }
 
-void CElfReader::ExtractMemoryLayout(bool usestatevectoraddress, uint32_t statevectoraddress)
+bool CElfReader::ExtractMemoryLayout(bool usestatevectoraddress, uint32_t statevectoraddress)
 {
+	bool retVal;
 	//just for debugging
 #ifdef _DEBUG_
 	std::fstream f;
@@ -1010,7 +1011,7 @@ void CElfReader::ExtractMemoryLayout(bool usestatevectoraddress, uint32_t statev
 	f.close();
 #endif
 	std::cout << std::hex;
-	if (m_SDRAM.size() > FlashLayoutLoc + sizeof(m_MemoryTable) / sizeof(m_MemoryTable[0])-m_MemoryLayout[0].OffsetCompensation)
+	if (m_SDRAM.size() >= FlashLayoutLoc + sizeof(m_MemoryTable) / sizeof(m_MemoryTable[0])-m_MemoryLayout[0].OffsetCompensation)
 	{
 		static const uint32_t LdfIdentifier_rel = LdfIdentifier - m_MemoryLayout[0].OffsetCompensation;
 		static const uint32_t FlashLayoutLoc_rel = FlashLayoutLoc - m_MemoryLayout[0].OffsetCompensation;
@@ -1021,7 +1022,7 @@ void CElfReader::ExtractMemoryLayout(bool usestatevectoraddress, uint32_t statev
 		if (identifier == flashid)
 		{
 			MemoryTable *mem = reinterpret_cast<MemoryTable*>(&dummy[FlashLayoutLoc_rel]);
-			while (mem != NULL)
+			while (mem != nullptr)
 			{
 				//just take the one that are really populated
 				if (mem->stopaddress-mem->startaddress)
@@ -1032,7 +1033,7 @@ void CElfReader::ExtractMemoryLayout(bool usestatevectoraddress, uint32_t statev
 				mem = reinterpret_cast<MemoryTable*>(&dummy[reinterpret_cast<uint32_t>(mem->m_NextTableEntry)-m_MemoryLayout[0].OffsetCompensation]);
 				if (mem == reinterpret_cast<MemoryTable*>(&dummy[FlashLayoutLoc_rel]))
 				{
-					mem = NULL;
+					mem = nullptr;
 				}
 			}
 
@@ -1191,90 +1192,123 @@ void CElfReader::ExtractMemoryLayout(bool usestatevectoraddress, uint32_t statev
 			uint32_t blockno = 1;
 			uint32_t crcix = 0;
 			uint32_t sizechecked = 0;
+			retVal = true;
+
 			for (auto & value : RegeneratedMemTable) {
 				//std::cout << "Block Number: " << std::hex << std::setfill('0') << std::setw(2) << blockno++ << " " << "Block start: 0x" << value.startaddress << " " << "Block stop: 0x" << value.stopaddress << std::endl;
 				const uint8_t *d = GetMemoryContent(reinterpret_cast<uint32_t>(value.startaddress), reinterpret_cast<uint32_t>(value.stopaddress));
-
-				value.m_u16CRC = g_CalcCrcSum(CRCSeed, (value.stopaddress - value.startaddress) * sizeof(*value.startaddress), d);
-				std::string bstat = value.m_bDMAAccess == false ? "false" : "true";
-				if (blockno)
+				if (d != nullptr)
 				{
-					std::cout << "{ " << "(uint16*)0x0" << value.startaddress << ", " << "(uint16*)0x0" << value.stopaddress << ", " << "0x0" << value.m_u16CRC << ", &m_astMemDescriptor[0x0" << blockno++ << "], " << bstat << ", " << "&m_au16CRCState[0x0" << crcix++ << "]},\t/* Length=0x" << value.stopaddress - value.startaddress << "*/" << std::endl;
-					if (reinterpret_cast<uint32_t>(value.startaddress) % 2)
+					value.m_u16CRC = g_CalcCrcSum(CRCSeed, (value.stopaddress - value.startaddress) * sizeof(*value.startaddress), d);
+					std::string bstat = value.m_bDMAAccess == false ? "false" : "true";
+					if (blockno)
 					{
-						std::cout << "Invalid block start" << std::endl;
-					}
-				}
-				else
-				{
-					std::cout << "{ " << "(uint16*)0x0" << value.startaddress << ", " << "(uint16*)0x0" << value.stopaddress << ", " << "0x0" << value.m_u16CRC << ", &m_astMemDescriptor[0x0" << blockno++ << "], " << bstat << ", " << "&m_au16CRCState[0x0" << crcix++ << "]}\t/* Length=0x" << value.stopaddress - value.startaddress << "*/" << std::endl;
-					if (reinterpret_cast<uint32_t>(value.startaddress) % 2)
-					{
-						std::cout << "Invalid block start" << std::endl;
-					}
-				}
-
-				//update memory content
-				MemoryTable *mem = reinterpret_cast<MemoryTable*>(&dummy[FlashLayoutCRCTable - m_MemoryLayout[0].OffsetCompensation]);
-				size_t i = 0;
-				for (auto & value : RegeneratedMemTable) {
-					value.m_pu16CRCState = &reinterpret_cast<uint16_t*>(statevectoraddress)[i];
-					mem[i++] = value;
-				}
-
-				if (i > 0)
-				{
-					const uint32_t tablesize = sizeof(MemoryTable);
-					mem[--i].m_NextTableEntry = reinterpret_cast<MemoryTable*>(FlashLayoutCRCTable);
-					while (i > 0)
-					{
-						uint32_t address = FlashLayoutCRCTable + i * sizeof(MemoryTable);
-						mem[i-1].m_NextTableEntry = reinterpret_cast<MemoryTable*>(address);
-						--i;
-					}
-
-				}
-				else
-				{
-					mem[0].m_bDMAAccess = false;
-					mem[0].m_NextTableEntry = reinterpret_cast<MemoryTable*>(FlashLayoutCRCTable);
-					mem[0].m_pu16CRCState = 0;
-					mem[0].startaddress = 0;
-					mem[0].stopaddress = 0;
-					mem[0].m_u16CRC = 0xFFFF;
-					std::cout << "No section found. Deactivate CRC checking." << std::endl;
-				}
-#ifdef _DEBUG_
-				if (reinterpret_cast<uint32_t>(value.startaddress) >= 0 && reinterpret_cast<uint32_t>(value.stopaddress) <= SDRAMSize)
-				{
-					volatile uint16_t benchmark = g_CalcCrcSum(CRCSeed, (value.stopaddress - value.startaddress) * sizeof(*value.startaddress), &testdata[reinterpret_cast<uint32_t>(value.startaddress)]);
-					int deviation = 0;
-					for (int j = 0; j < value.stopaddress - value.startaddress; j++)
-					{
-						if (d[j] != testdata[j + reinterpret_cast<uint32_t>(value.startaddress)])
+						std::cout << "{ " << "(uint16*)0x0" << value.startaddress << ", " << "(uint16*)0x0" << value.stopaddress << ", " << "0x0" << value.m_u16CRC << ", &m_astMemDescriptor[0x0" << blockno++ << "], " << bstat << ", " << "&m_au16CRCState[0x0" << crcix++ << "]},\t/* Length=0x" << value.stopaddress - value.startaddress << "*/" << std::endl;
+						if (reinterpret_cast<uint32_t>(value.startaddress) % 2)
 						{
-							std::cout << "Discrepancy at address: "  "0x0" << std::hex << reinterpret_cast<uint32_t>(value.startaddress) + j << " target: " << "0x" << std::hex << std::setfill('0') << std::setw(2) << static_cast<uint32>(testdata[reinterpret_cast<uint32_t>(value.startaddress) + j]) << " ldr: " << "0x" << std::hex << std::setfill('0') << std::setw(2) << static_cast<uint32>(d[j]) << std::endl;
-							deviation++;
+							std::cout << "Invalid block start" << std::endl;
 						}
 					}
-					if (deviation > 0) {
-						std::cout << "Block: " << "0x0" << std::hex << value.startaddress << " deviates in " << std::hex << deviation << " bytes" << "CRC is: 0x" << benchmark << std::endl;
+					else
+					{
+						std::cout << "{ " << "(uint16*)0x0" << value.startaddress << ", " << "(uint16*)0x0" << value.stopaddress << ", " << "0x0" << value.m_u16CRC << ", &m_astMemDescriptor[0x0" << blockno++ << "], " << bstat << ", " << "&m_au16CRCState[0x0" << crcix++ << "]}\t/* Length=0x" << value.stopaddress - value.startaddress << "*/" << std::endl;
+						if (reinterpret_cast<uint32_t>(value.startaddress) % 2)
+						{
+							std::cout << "Invalid block start" << std::endl;
+						}
+					}
+
+					//update memory content
+					MemoryTable* mem = reinterpret_cast<MemoryTable*>(&dummy[FlashLayoutCRCTable - m_MemoryLayout[0].OffsetCompensation]);
+					size_t i = 0;
+					for (auto& value : RegeneratedMemTable) {
+						value.m_pu16CRCState = &reinterpret_cast<uint16_t*>(statevectoraddress)[i];
+						mem[i++] = value;
+					}
+
+					if (i > 0)
+					{
+						const uint32_t tablesize = sizeof(MemoryTable);
+						mem[--i].m_NextTableEntry = reinterpret_cast<MemoryTable*>(FlashLayoutCRCTable);
+						while (i > 0)
+						{
+							uint32_t address = FlashLayoutCRCTable + i * sizeof(MemoryTable);
+							mem[i - 1].m_NextTableEntry = reinterpret_cast<MemoryTable*>(address);
+							--i;
+						}
+
+					}
+					else
+					{
+						mem[0].m_bDMAAccess = false;
+						mem[0].m_NextTableEntry = reinterpret_cast<MemoryTable*>(FlashLayoutCRCTable);
+						mem[0].m_pu16CRCState = 0;
+						mem[0].startaddress = 0;
+						mem[0].stopaddress = 0;
+						mem[0].m_u16CRC = 0xFFFF;
+						std::cout << "No section found. Deactivate CRC checking." << std::endl;
+					}
+#ifdef _DEBUG_
+					if (reinterpret_cast<uint32_t>(value.startaddress) >= 0 && reinterpret_cast<uint32_t>(value.stopaddress) <= SDRAMSize)
+					{
+						volatile uint16_t benchmark = g_CalcCrcSum(CRCSeed, (value.stopaddress - value.startaddress) * sizeof(*value.startaddress), &testdata[reinterpret_cast<uint32_t>(value.startaddress)]);
+						int deviation = 0;
+						for (int j = 0; j < value.stopaddress - value.startaddress; j++)
+						{
+							if (d[j] != testdata[j + reinterpret_cast<uint32_t>(value.startaddress)])
+							{
+								std::cout << "Discrepancy at address: "  "0x0" << std::hex << reinterpret_cast<uint32_t>(value.startaddress) + j << " target: " << "0x" << std::hex << std::setfill('0') << std::setw(2) << static_cast<uint32>(testdata[reinterpret_cast<uint32_t>(value.startaddress) + j]) << " ldr: " << "0x" << std::hex << std::setfill('0') << std::setw(2) << static_cast<uint32>(d[j]) << std::endl;
+								deviation++;
+							}
+						}
+						if (deviation > 0) {
+							std::cout << "Block: " << "0x0" << std::hex << value.startaddress << " deviates in " << std::hex << deviation << " bytes" << "CRC is: 0x" << benchmark << std::endl;
+						}
+					}
+#endif
+					sizechecked += (value.stopaddress - value.startaddress) * sizeof(*value.startaddress);
+					if (blockno == RegeneratedMemTable.size())
+					{
+						blockno = 0;
 					}
 				}
-#endif
-				sizechecked += (value.stopaddress - value.startaddress) * sizeof(*value.startaddress);
-				if (blockno == RegeneratedMemTable.size())
+				else
 				{
-					blockno = 0;
+					retVal = false;
+					break;
 				}
 			}
-			std::cout << std::dec << "Length of stream: " << m_StreamLength << "(dec) Bytes " << "Code/const data size: " << sizechecked << "(dec) " << "Percentage of stream being checked= " << 100.0 * sizechecked / m_StreamLength << " %" << std::endl;
+
+			if (retVal)
+			{
+				std::cout << std::dec << "Length of stream: " << m_StreamLength << "(dec) Bytes " << "Code/const data size: " << sizechecked << "(dec) " << "Percentage of stream being checked= " << 100.0 * sizechecked / m_StreamLength << " %" << std::endl;
+				if (RegeneratedMemTable.size() <= sizeof(m_MemoryTable) / sizeof(m_MemoryTable[0]))
+				{
+					std::cout << std::dec << "No. of CRC vector table entries: " << RegeneratedMemTable.size() << " out of " << sizeof(m_MemoryTable) / sizeof(m_MemoryTable[0]) << ". Remaining table size: " << (sizeof(m_MemoryTable) / sizeof(m_MemoryTable[0])) - RegeneratedMemTable.size() << " entries." << std::endl;
+				}
+				else
+				{
+					std::cout << std::dec << "Error. Number of table entries: " << RegeneratedMemTable.size() << " out of " << sizeof(m_MemoryTable) / sizeof(m_MemoryTable[0]) << ". Insufficient table space." << std::endl;
+					retVal = false;
+				}
+			}
+			else
+			{
+				std::cout << "Invalid flash file. Unable to resolve memory sections." << std::endl;
+			}
 		}
 		else
 		{
 			std::cout << "Invalid file. ldf file doesn't contain a valid identifier." << std::endl;
+			retVal = false;
 		}
 	}
+	else
+	{
+		std::cout << "Invalid file. ldf file does not contain valid CRC table section." << std::endl;
+		retVal = false;
+	}
+	return retVal;
 }
 
 bool CElfReader::OpenLdrFile(std::string existingldr)
@@ -1365,7 +1399,7 @@ std::string CElfReader::SetExtendedAddress(uint32_t address)
 	return stream.str();
 }
 
-bool CElfReader::Merge(std::string patcheldrfile, uint32_t baseaddress, bool appendappinfoblock, uint32_t appinfoblockaddress)
+bool CElfReader::Merge(std::string patcheldrfile, uint32_t baseaddress)
 {
 	uint32_t i, j;
 	uint32_t base = baseaddress;

@@ -829,6 +829,36 @@ static void PrintRecordSet(size_t tablelength, CommandLineOption const* const pt
     std::cout << std::endl;
 }
 
+static void PrintSrcTree_V303(V303::CElfReader& elfreader, bool printoriginal, bool printpatched)
+{
+    if (printoriginal)
+    {
+        std::cout << std::endl << std::endl;
+        elfreader.PrintFileTree(false);
+    }
+
+    if (printpatched)
+    {
+        std::cout << std::endl << std::endl;
+        elfreader.PrintFileTree(true);
+    }
+}
+
+static void PrintSrcTree_V304(V304::CElfReader& elfreader, bool printoriginal, bool printpatched)
+{
+    if (printoriginal)
+    {
+        std::cout << std::endl << std::endl;
+        elfreader.PrintFileTree(false);
+    }
+
+    if (printpatched)
+    {
+        std::cout << std::endl << std::endl;
+        elfreader.PrintFileTree(true);
+    }
+}
+
 template <typename T, int sz>
 constexpr size_t size(T(&)[sz])
 {
@@ -845,47 +875,51 @@ static void Execute_V303(std::string& src, std::string& dst, uint32 addr_offset,
         {
             std::cout << "Deflating completed..." << std::endl;
 
-            reader.ExtractMemoryLayout(usestatevector, StateVectorAddress);
-
-            if (reader.PatchFile(appendinfoblock, appendinfoblocklocation))
+            if (reader.ExtractMemoryLayout(usestatevector, StateVectorAddress))
             {
-                if (reader.OpenLdrFile(src))
+                if (reader.PatchFile(appendinfoblock, appendinfoblocklocation))
                 {
-                    if (reader.Merge(dst, addr_offset, appendinfoblock, appendinfoblocklocation))
+                    if (reader.OpenLdrFile(src))
                     {
-                        std::cout << "File successfully merged." << std::endl;
-                        if (verify)
+                        if (reader.Merge(dst, addr_offset))
                         {
-                            std::cout << "Checking integrity..." << std::endl;
-                            if (reader.CheckIntegrity(dst))
+                            std::cout << "File successfully merged." << std::endl;
+                            if (verify)
                             {
-                                std::cout << "Verification succeeded." << std::endl;
+                                std::cout << "Checking integrity..." << std::endl;
+                                if (reader.CheckIntegrity(dst))
+                                {
+                                    std::cout << "Verification succeeded." << std::endl;
+                                }
+                                else
+                                {
+                                    std::cout << "Integrity check failed. " << std::endl;
+                                }
                             }
                             else
                             {
-                                std::cout << "Integrity check failed. " << std::endl;
+                                std::cout << "Unknown attribute" << std::endl;
                             }
                         }
                         else
                         {
-                            std::cout << "Unknown attribute" << std::endl;
+                            std::cout << "Error. Unable to patch file (merge process)." << std::endl;
                         }
                     }
                     else
                     {
-                        std::cout << "Error. Unable to patch file (merge process)." << std::endl;
+                        std::cout << "Error. Unable to patch file (OpenLdrFile)." << std::endl;
                     }
                 }
                 else
                 {
-                    std::cout << "Error. Unable to patch file (OpenLdrFile)." << std::endl;
+                    std::cout << "Error. Unable to patch file (patch)." << std::endl;
                 }
             }
             else
             {
-                std::cout << "Error. Unable to patch file (patch)." << std::endl;
+                std::cout << "Error. Unable to extract memory layout." << std::endl;
             }
-
         }
         else
         {
@@ -908,47 +942,51 @@ static void Execute_V304(std::string& src, std::string& dst, uint32 addr_offset,
         {
             std::cout << "Deflating completed..." << std::endl;
 
-            reader.ExtractMemoryLayout(usestatevector, StateVectorAddress);
-
-            if (reader.PatchFile(appendinfoblock, appendinfoblocklocation))
+            if (reader.ExtractMemoryLayout(usestatevector, StateVectorAddress))
             {
-                if (reader.OpenLdrFile(src))
+                if (reader.PatchFile(appendinfoblock, appendinfoblocklocation))
                 {
-                    if (reader.Merge(dst, addr_offset, appendinfoblock, appendinfoblocklocation))
+                    if (reader.OpenLdrFile(src))
                     {
-                        std::cout << "File successfully merged." << std::endl;
-                        if (verify)
+                        if (reader.Merge(dst, addr_offset))
                         {
-                            std::cout << "Checking integrity..." << std::endl;
-                            if (reader.CheckIntegrity(dst))
+                            std::cout << "File successfully merged." << std::endl;
+                            if (verify)
                             {
-                                std::cout << "Verification succeeded." << std::endl;
+                                std::cout << "Checking integrity..." << std::endl;
+                                if (reader.CheckIntegrity(dst))
+                                {
+                                    std::cout << "Verification succeeded." << std::endl;
+                                }
+                                else
+                                {
+                                    std::cout << "Integrity check failed. " << std::endl;
+                                }
                             }
                             else
                             {
-                                std::cout << "Integrity check failed. " << std::endl;
+                                std::cout << "Unknown attribute" << std::endl;
                             }
                         }
                         else
                         {
-                            std::cout << "Unknown attribute" << std::endl;
+                            std::cout << "Error. Unable to patch file (merge process)." << std::endl;
                         }
                     }
                     else
                     {
-                        std::cout << "Error. Unable to patch file (merge process)." << std::endl;
+                        std::cout << "Error. Unable to patch file (OpenLdrFile)." << std::endl;
                     }
                 }
                 else
                 {
-                    std::cout << "Error. Unable to patch file (OpenLdrFile)." << std::endl;
+                    std::cout << "Error. Unable to patch file (patch)." << std::endl;
                 }
             }
             else
             {
-                std::cout << "Error. Unable to patch file (patch)." << std::endl;
+                std::cout << "Error. Invalid/corrupt flash file." << std::endl;
             }
-
         }
         else
         {
@@ -1013,7 +1051,7 @@ int main(int argc, char** argv)
         {"-src", "Source file", "", nullptr, EN_DATATYPE::STRING, 0, &DefEnvironment.src, nullptr, nullptr},
         {"-dst", "Destination file", "", nullptr, EN_DATATYPE::STRING, 0, &DefEnvironment.dst, nullptr, nullptr},
         {"-uvsa", "specify vector state address", "[false/true]", &DefCallBack, EN_DATATYPE::BOOL, sizeof(bool), &DefEnvironment.bVectorStateAddress, nullptr, nullptr},
-        {"-vsa", "define vector state address", "", &VectorStateAddressResolutor, EN_DATATYPE::INT32, sizeof(uint32), &DefEnvironment.u32_VectorStateAddress, nullptr, &CUint32Range},
+        {"-vsa", "define vector state address (address of m_astMemDescriptor)", "", &VectorStateAddressResolutor, EN_DATATYPE::INT32, sizeof(uint32), &DefEnvironment.u32_VectorStateAddress, nullptr, &CUint32Range},
         {"-offset", "defines address offset ", "", &DefCallBack, EN_DATATYPE::UINT32, sizeof(uint32), &DefEnvironment.u32_BaseAddress, nullptr, &CUint32Range},
         {"-appib", "append info block", "[false/true]", &DefCallBack, EN_DATATYPE::BOOL, sizeof(bool), &DefEnvironment.bAppendInfoBlock, nullptr, nullptr},
         {"-ibloc", "info block location", "", &InfoBlockAddressResolutor, EN_DATATYPE::UINT32, sizeof(uint32), &DefEnvironment.u32_AppendInfoBlockLocation, nullptr, nullptr},
