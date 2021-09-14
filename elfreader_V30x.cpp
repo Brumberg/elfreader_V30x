@@ -870,10 +870,10 @@ static void Execute_V303(std::string& src, std::string& dst, uint32 addr_offset,
     V303::CElfReader reader(src);
     if (reader.GetState() == V303::CElfReader::ELF_OK)
     {
-        std::cerr << "File OK" << std::endl;
+        std::cerr << "File OK." << std::endl;
         if (reader.Deflate())
         {
-            std::cerr << "Deflating completed..." << std::endl;
+            std::cerr << "Deflating completed." << std::endl;
 
             if (reader.ExtractMemoryLayout(usestatevector, StateVectorAddress))
             {
@@ -893,12 +893,12 @@ static void Execute_V303(std::string& src, std::string& dst, uint32 addr_offset,
                                 }
                                 else
                                 {
-                                    std::cerr << "Integrity check failed. " << std::endl;
+                                    std::cerr << "Integrity check failed." << std::endl;
                                 }
                             }
                             else
                             {
-                                std::cerr << "Unknown attribute" << std::endl;
+                                std::cerr << "Unknown attribute." << std::endl;
                             }
                         }
                         else
@@ -928,7 +928,7 @@ static void Execute_V303(std::string& src, std::string& dst, uint32 addr_offset,
     }
     else
     {
-        std::cerr << "Error occured. " << "State" << reader.GetState() << std::endl;
+        std::cerr << "Error occured. " << "State: " << reader.GetState() << std::endl;
     }
 }
 
