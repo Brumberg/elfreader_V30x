@@ -1468,6 +1468,7 @@ bool CElfReader::Merge(std::string patcheldrfile, uint32_t baseaddress)
 	bool retVal = true;
 	if (elffile.is_open())
 	{
+		std::cout << std::hex << "Base address set to: 0x" << base << std::endl;
 		std::vector<uint8_t>::iterator iter = m_PatchedData.begin();
 		uint32_t addresscounter = base;
 
@@ -1952,14 +1953,14 @@ bool CIntelHexConverter::Convert(size_t length, char *datain, std::vector<uint8_
 				break;
 			case 2:
 				addressoffset = static_cast<size_t>(strtoul(datarec.c_str(), NULL, 16) * 16);
-				std::cout << "Start Segment (16):" << std::hex << "0x" << addressoffset << std::endl;
+				std::cout << "Start segment (16): " << std::hex << "0x" << addressoffset << std::endl;
 				break;
 			case 3:
 				std::cout << "Blocktype 3 not supported" << std::endl;
 				break;
 			case 4:
 				addressoffset = static_cast<size_t>(strtoul(datarec.c_str(), NULL, 16) * 65536);
-				std::cout << "Start Segment (32):" << std::hex << "0x" << addressoffset << std::endl;
+				std::cout << "Start segment (32):" << std::hex << "0x" << addressoffset << std::endl;
 				break;
 			case 5:
 				std::cout << "Blocktype 5 not supported" << std::endl;
