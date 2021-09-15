@@ -197,7 +197,7 @@ CElfReader::CElfReader(std::string filename)
 			m_FileRawData.clear();
 			m_FileRawData.reserve(filesize);
 			char *dummy = new char [filesize];
-			if (dummy)
+			if (dummy!=nullptr)
 			{
 				elffile.read(dummy, filesize);
 				if (elffile)
@@ -233,8 +233,59 @@ CElfReader::CElfReader(std::string filename)
 			eElfStatus = UNABLEOPENFILE;
 		}
 	}
+	else
+	{
+		eElfStatus = INVALIDFILENAME;
+	}
 }
 
+const std::string& CElfReader::GetStateMessage() const
+{
+	static const std::string messages[] =
+	{
+		"Object not instantiated.",
+		"No file name defined.",
+		"Unable to open file.",
+		"Insufficient memory available.",
+		"File is incomplete.",
+		"File contains unknown tokens.",
+		"Can not write destination file."
+		"File is OK.",
+		"Unexpected/Unknown error."
+	};
+	uint32 selector;
+	switch (eElfStatus)
+	{
+		case UNINITIALIZED:
+			selector = 0u;
+			break;
+		case INVALIDFILENAME:
+			selector = 1u;
+			break;
+		case UNABLEOPENFILE:
+			selector = 2u;
+			break;
+		case OUTOFMEMORY:
+			selector = 3u;
+			break;
+		case FILEINCOMPLETE:
+			selector = 4u;
+			break;
+		case ELF_INVALID:
+			selector = 5u;
+			break;
+		case ELF_DESTFILEINVALID:
+			selector = 6u;
+			break;
+		case ELF_OK:
+			selector = 7u;
+			break;
+		default:
+			selector = 8u;
+			break;
+	}
+	return messages[selector];
+}
 
 /**
 * Load application from SPI flash to RAM.
@@ -1420,7 +1471,7 @@ bool CElfReader::Merge(std::string patcheldrfile, uint32_t baseaddress)
 	elffile.open(patcheldrfile, std::ios_base::out | std::ios_base::trunc);
 
 	uint32_t linecount = 0;
-
+	bool retVal = true;
 	if (elffile.is_open())
 	{
 		std::vector<uint8_t>::iterator iter = m_PatchedData.begin();
@@ -1564,7 +1615,12 @@ bool CElfReader::Merge(std::string patcheldrfile, uint32_t baseaddress)
 		}
 		elffile << ":00000001FF" << std::endl;
 	}
-	return true;
+	else
+	{
+		eElfStatus = ELF_DESTFILEINVALID;
+		retVal = false;
+	}
+	return retVal;
 }
 
 uint32_t CElfReader::FindBlock(uint32_t address)

@@ -928,7 +928,7 @@ static void Execute_V303(std::string& src, std::string& dst, uint32 addr_offset,
     }
     else
     {
-        std::cerr << "Error occured. " << "State: " << reader.GetState() << std::endl;
+        std::cerr << "Error occured. " << reader.GetStateMessage() << std::endl;
     }
 }
 
@@ -971,6 +971,7 @@ static void Execute_V304(std::string& src, std::string& dst, uint32 addr_offset,
                         else
                         {
                             std::cerr << "Error. Unable to patch file (merge process)." << std::endl;
+                            std::cerr << reader.GetStateMessage() << std::endl;
                         }
                     }
                     else
@@ -995,7 +996,7 @@ static void Execute_V304(std::string& src, std::string& dst, uint32 addr_offset,
     }
     else
     {
-        std::cerr << "Error occured. " << "State" << reader.GetState() << std::endl;
+        std::cerr << "Error occured. " << reader.GetStateMessage() << std::endl;
     }
 }
 

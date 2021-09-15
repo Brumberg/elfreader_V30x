@@ -38,7 +38,7 @@ namespace V303
 	class CElfReader
 	{
 	public:
-		enum ElfStatus { UNINITIALIZED, UNABLEOPENFILE, OUTOFMEMORY, FILEINCOMPLETE, ELF_INVALID, ELF_OK };
+		enum ElfStatus { UNINITIALIZED, INVALIDFILENAME, UNABLEOPENFILE, OUTOFMEMORY, FILEINCOMPLETE, ELF_INVALID, ELF_DESTFILEINVALID, ELF_OK };
 		enum BlockType { NORMAL, FILL };
 	private:
 		static const uint32_t SDRAMSize = 16777216;
@@ -147,6 +147,7 @@ namespace V303
 		bool PatchFile(bool appendinfoblock, uint32_t appinfoaddress);
 		bool Deflate();
 		ElfStatus GetState()const { return eElfStatus; }
+		const std::string& GetStateMessage() const;
 		bool ExtractMemoryLayout(bool usestatevectoraddress, uint32_t statevectoraddress);
 		bool OpenLdrFile(std::string existingldr);
 		bool PrintFileTree(bool patchedfile = true) const;
